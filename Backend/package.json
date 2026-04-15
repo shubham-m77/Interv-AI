@@ -1,5 +1,5 @@
 {
-  "name": "genai-project",
+  "name": "interv-ai",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -7,7 +7,6 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "node server.js",
     "start": "node server.js",
-    "vercel-start": "node server.js"
   },
   "keywords": [],
   "author": "",
