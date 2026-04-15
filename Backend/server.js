@@ -5,7 +5,6 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const interviewRouter = require('./src/routes/interview.routes');
 const { default: mongoose } = require('mongoose');
-const PORT = process.env.PORT || 3000;
 const app = express();
 
 app.use(cookieParser());
