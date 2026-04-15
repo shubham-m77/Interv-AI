@@ -28,13 +28,11 @@ const registerUser = async(req,res)=>{
             username: user.username
          }, process.env.JWT_SECRET, { expiresIn: '3d'
         })
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-            maxAge: 7 * 24 * 60 * 60 * 1000
+        res.status(201).json({
+            message:"User registered successfully", 
+            token,
+            user:{id: user._id, username: user.username, email: user.email}
         });
-        res.status(201).json({message:"User registered successfully", user:{id: user._id, username: user.username, email: user.email}});
     } catch (error) {
         console.error("Error registering user:", error);
         res.status(500).json({message:"Server error"});
@@ -57,13 +55,11 @@ const loginUser = async(req,res)=>{
             id: user._id,
             username: user.username}, process.env.JWT_SECRET, { expiresIn: '3d' });
             
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 3 * 24 * 60 * 60 * 1000
+        res.status(200).json({
+            message:"User logged in successfully", 
+            token,
+            user:{id: user._id, username: user.username, email: user.email}
         });
-        res.status(200).json({message:"User logged in successfully", user:{id: user._id, username: user.username, email: user.email}});
     
     } catch (error) {
         console.error("Error logging in user:", error);
@@ -73,17 +69,20 @@ const loginUser = async(req,res)=>{
 
 // logout user by blacklisting the token
 const logoutUser = async(req,res)=>{
-    const token = req.cookies.token;
-        if(token){
-            await tokenBlacklistModel.create({token});
-        }
-        res.clearCookie('token', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax'
-        });
-        res.status(201).json({message:"User logged out successfully"});
+    const authHeader = req.headers.authorization;
+    let token = null;
 
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.slice(7);
+    } else if (req.cookies.token) {
+        token = req.cookies.token;
+    }
+
+    if(token){
+        await tokenBlacklistModel.create({token});
+    }
+    
+    res.status(200).json({message:"User logged out successfully"});
 }
 
 // gets the current user's information

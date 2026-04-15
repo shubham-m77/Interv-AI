@@ -7,6 +7,7 @@ import InterviewGenerator from './features/ai/pages/InterviewGenerator'
 import InterviewReport from './features/ai/pages/InterviewReport'
 import Home from './pages/Home'
 import AllInterviewReports from './features/ai/pages/AllInterviewReports.jsx'
+import About from './pages/About.jsx'
 
 const AppLayout = () => (
     <div className="px-4 md:px-12 lg:px-32 relative w-full min-h-screen">
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
             { index: true, element: <Home /> },
+            { path:"learn-more", element: <About /> },
             { path: 'interview-report', element: <Protected><InterviewGenerator /></Protected> },
             { path: 'login', element: <Login /> },
             { path: 'register', element: <Register /> },

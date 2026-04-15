@@ -10,11 +10,17 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const getAndSetUser = async () => {
             try {
-                const data = await getUser()
-                setUser(data.user)
-
+                // Check if token exists in localStorage
+                const token = localStorage.getItem('authToken')
+                if (token) {
+                    const data = await getUser()
+                    if (data?.user) {
+                        setUser(data.user)
+                    }
+                }
             } catch (error) {
                 console.error("Error fetching user:", error)
+                localStorage.removeItem('authToken')
             }
             finally {
                 setLoading(false)
@@ -22,8 +28,6 @@ export const AuthProvider = ({ children }) => {
         }
         getAndSetUser()
     }, [])
-
-  
 
     return (
         <AuthContext.Provider value={{ user, setUser, loading, setLoading }}>

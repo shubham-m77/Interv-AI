@@ -20,11 +20,15 @@ const Navbar = () => {
     return (
         <header className=" top-0 w-full rounded-2xl my-6 z-50 bg-[#363636]/70 backdrop-blur flex justify-between items-center px-8 h-16 shadow-[0_24px_24px_-4px_rgba(255,255,255,0.06)]">
             <div className="flex items-center gap-2 group">
-               <a href="/"><h2 className="font-manrope font-bold text-xl tracking-tighter text-white">Interv<span className='font-black bg-gradient-to-r from-primary to-primary-dim group-hover:from-primary-dim transition-colors duration-150 ease-linear group-hover:to-primary bg-clip-text text-transparent'>.AI</span></h2></a> </div>
+               <a href="/"><h2 className="font-manrope font-bold text-xl tracking-tighter text-white">interv<span className='font-black bg-gradient-to-r from-primary to-primary-dim group-hover:from-primary-dim transition-colors duration-150 ease-linear group-hover:to-primary bg-clip-text text-transparent'>.ai</span></h2></a> </div>
             {/* PC Menu */}
             <nav className="hidden md:flex items-center gap-12 h-full justify-center">
                 <a className={`font-manrope tracking-tight nav-link font-medium text-sm text-gray-300 hover:text-white h-full flex items-center border-b-primary ${pathname === '/interview-report' ? 'border-b-2' : ''}`} href="/interview-report">
                     Report Generator
+                </a>
+
+                <a className={`font-manrope tracking-tight nav-link font-medium text-sm text-gray-300 hover:text-white h-full flex items-center border-b-primary ${pathname === '/learn-more' ? 'border-b-2' : ''}`} href="/learn-more">
+                    About Us
                 </a>
                 {user && (
                     <>
@@ -43,6 +47,9 @@ const Navbar = () => {
                     </a>
                         <a className={`font-manrope tracking-tight nav-link border-b-primary font-medium text-sm text-white h-full flex items-center  ${pathname === '/interview-reports' ? 'border-b-2' : ''}`} href="/interview-reports">
                             Your Reports
+                        </a>
+                        <a className={`font-manrope tracking-tight nav-link border-b-primary font-medium text-sm text-white h-full flex items-center  ${pathname === '/learn-more' ? 'border-b-2' : ''}`} href="/learn-more">
+                            About Us
                         </a>
 
                         <Button onClick={handleLogout} className="md:hidden font-manrope text-xs md:px-4 gap-2 md:py-2 border-2 cursor-pointer border-red-400 bg-inherit hover:bg-red-400/20 rounded-xl font-semibold md:text-sm text-gray-400 hover:text-white transition duration-200 ease-linear active:scale-95">

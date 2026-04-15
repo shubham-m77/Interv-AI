@@ -6,7 +6,7 @@ const Footer = () => {
             <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
                 <div class="flex flex-col items-center md:items-start">
                     <div className="flex items-center gap-2 group">
-                        <a href="/"><h2 className="font-manrope font-bold text-lg tracking-tighter text-white">Interv<span className='font-black bg-gradient-to-r from-primary to-primary-dim group-hover:from-primary-dim transition-colors duration-150 ease-linear group-hover:to-primary bg-clip-text text-transparent'>.AI</span></h2></a> 
+                        <a href="/"><h2 className="font-manrope font-bold text-lg tracking-tighter text-white">interv<span className='font-black bg-gradient-to-r from-primary to-primary-dim group-hover:from-primary-dim transition-colors duration-150 ease-linear group-hover:to-primary bg-clip-text text-transparent'>.ai</span></h2></a> 
                         </div>
                     <p class="font-['Inter'] text-xs text-gray-500 max-w-[280px] text-center md:text-left">
                         © 2026 InterviewAI. Precision in every insight.

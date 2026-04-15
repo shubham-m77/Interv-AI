@@ -1,9 +1,4 @@
-import axios from 'axios'
-
-const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
-    withCredentials: true
-})
+import apiClient from '../../../lib/apiClient'
 
 // generating interview report :connecting backend with frontend
 export const generateInterviewReport = async ({  jobDescription, selfDescription ,resume}) => {
@@ -13,7 +8,7 @@ export const generateInterviewReport = async ({  jobDescription, selfDescription
     formData.append("resume", resume)
 
     try {
-        const res = await api.post("/api/interview", formData, {
+        const res = await apiClient.post("/api/interview", formData, {
             headers: {
                 "Content-Type": "multipart/form-data"
             }
@@ -27,7 +22,7 @@ export const generateInterviewReport = async ({  jobDescription, selfDescription
 // get interview report by id :connecting backend with frontend
 export const getInterviewReport = async (interviewId) => {
     try {
-        const res = await api.get(`/api/interview/report/${interviewId}`);
+        const res = await apiClient.get(`/api/interview/report/${interviewId}`);
         return res.data;
     } catch (error) {
         console.error(error)
@@ -37,7 +32,7 @@ export const getInterviewReport = async (interviewId) => {
 // get interview report by id :connecting backend with frontend
 export const getAllInterviewReports = async () => {
     try {
-        const res = await api.get(`/api/interview`);
+        const res = await apiClient.get(`/api/interview`);
         return res.data;
     } catch (error) {
         console.error(error)
@@ -47,7 +42,7 @@ export const getAllInterviewReports = async () => {
 // generate resume by interviewId :connecting backend with frontend
 export const generateResumePDF = async (interviewId) => {
     try {
-        const res = await api.get(`/api/interview/resume/pdf/${interviewId}`,{
+        const res = await apiClient.get(`/api/interview/resume/pdf/${interviewId}`,{
             responseType:"blob"
         });
         return res.data;
