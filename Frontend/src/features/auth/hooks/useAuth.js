@@ -39,11 +39,11 @@ export const useAuth = () => {
     }
 
     // Register Functionality
-    const handleRegister = async ({ email, password }) => {
+    const handleRegister = async ({ username,email, password }) => {
         setLoading(true)
         try {
             // Calling the register API and update the user state
-            const data = await register({ email, username, password })
+            const data = await register({ username, email, password })
             setUser(data.user)
             navigate('/')
             enqueueSnackbar("Registration Successful! You're Logged-In", { 

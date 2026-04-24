@@ -8,8 +8,8 @@ const Footer = () => {
                     <div className="flex items-center gap-2 group">
                         <a href="/"><h2 className="font-manrope font-bold text-lg tracking-tighter text-white">interv<span className='font-black bg-gradient-to-r from-primary to-primary-dim group-hover:from-primary-dim transition-colors duration-150 ease-linear group-hover:to-primary bg-clip-text text-transparent'>.ai</span></h2></a> 
                         </div>
-                    <p class="font-['Inter'] text-xs text-gray-500 max-w-[280px] text-center md:text-left">
-                        © 2026 InterviewAI. Precision in every insight.
+                    <p class="font-['Inter'] text-xs text-gray-500 max-w-\0 text-center md:text-left">
+                        © 2026 Interv.AI - Precision in every insight.
                     </p>
                 </div>
                                     <hr className='border-0.5 md:hidden w-full border-primary/20'/>
