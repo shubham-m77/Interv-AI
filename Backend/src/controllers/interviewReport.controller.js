@@ -5,17 +5,34 @@ const InterviewReport = require('../models/interviewReportModel');
 
 // Generate Interview Report
 const interviewReportController = async (req, res) => {
-    const resumeFile = req.file;
-    if (!resumeFile) {
-        return res.status(400).json({ message: "No resume file uploaded" });
-    }
     try {
-        const resumeData = await (new PDFParse(Uint8Array.from(resumeFile.buffer)).getText());
-        const { jobDescription, selfDescription } = req.body;
-        const interviewReportByAi = await generateInterviewReport({ resume: resumeData.text, jobDescription, selfDescription });
+        const resumeFile = req.file;
+        const { jobDescription, selfDescription = "" } = req.body;
+        if (!jobDescription || !jobDescription.trim()) {
+            return res.status(400).json({
+                message: "Job description is required"
+            });
+        }
+        let resumeText = "";
+        if (resumeFile) {
+            const resumeData = await new PDFParse(
+                Uint8Array.from(resumeFile.buffer)
+            ).getText();
+
+            resumeText = resumeData.text || "";
+        }
+        const hasResume = resumeText.trim().length > 0;
+        const hasSelfDescription = selfDescription.trim().length > 0;
+
+        if (!hasResume && !hasSelfDescription) {
+            return res.status(400).json({
+                message: "Please provide either resume or self description"
+            });
+        }
+        const interviewReportByAi = await generateInterviewReport({ resume: resumeText, jobDescription, selfDescription });
         const interviewReport = await interviewReportModel.create({
             user: req.user._id,
-            resume: resumeData.text,
+            resume: resumeText,
             jobDescription,
             selfDescription,
             ...interviewReportByAi
@@ -76,7 +93,13 @@ const generateResume = async (req, res) => {
                 return res.status(404).json({ message: "Interview report not available" });
             }
         }
-        const { resume, selfDescription, jobDescription } = interviewReport;
+        const { resume = "", selfDescription = "", jobDescription } = interviewReport;
+
+        if (!resume.trim() && !selfDescription.trim()) {
+            return res.status(400).json({
+                message: "Resume cannot be generated because candidate data is missing"
+            });
+        }
         const pdfBuffer = await generateResumePdf({ resume, selfDescription, jobDescription });
         res.set({
             "Content-Type": "application/pdf",

@@ -26,12 +26,25 @@ const InterviewGenerator = () => {
 
   // Generating report function
   const handleGenerateReport = async () => {
-    const resume = selectedFile || fileInputRef.current?.files[0]
-    if (!resume) {
-      alert("Please select a resume file");
+    const resume = selectedFile || fileInputRef.current?.files?.[0] || null;
+    const cleanJobDescription = jobDescription.trim();
+    const cleanSelfDescription = selfDescription.trim();
+
+    if (!cleanJobDescription) {
+      alert("Job description is required");
       return;
     }
-    const res = await generateReport({  jobDescription,selfDescription, resume })
+
+    if (!resume && !cleanSelfDescription) {
+      alert("Please upload a resume or write a self description");
+      return;
+    }
+
+    const res = await generateReport({
+      jobDescription: cleanJobDescription,
+      selfDescription: cleanSelfDescription,
+      resume,
+    });
     if (res) {
       navigate(`/interview-report/${res._id}`)
     }
@@ -106,16 +119,16 @@ const InterviewGenerator = () => {
                     Candidate Resume
                   </Label>
                 </div>
-            
+
                 <Card
-                  onClick={() => {fileInputRef.current?.click()}}
+                  onClick={() => { fileInputRef.current?.click() }}
                   className="flex-1 border-2 border-dashed border-blue-500/30 rounded-xl bg-primary-foreground/10 hover:bg-primary-foreground/30 hover:border-blue-500 transition-all flex flex-col items-center justify-center p-6 text-center cursor-pointer shadow-none"
                 >
                   <Input
                     ref={fileInputRef}
                     id="resume"
                     type="file"
-                    accept=".pdf,.docx"
+                    accept=".pdf"
                     name="resume"
                     onChange={handleFileChange}
                     hidden
@@ -144,7 +157,7 @@ const InterviewGenerator = () => {
                         Drag & drop resume here
                       </p>
                       <p className="text-muted-foreground text-sm">
-                        PDF/ DOCX up to 5MB
+                        PDF up to 5MB
                       </p>
                     </>
                   )}
@@ -175,6 +188,9 @@ const InterviewGenerator = () => {
                   />
                 </div>
               </div>
+              <p className="text-xs text-blue-600">
+                * Upload a resume, write a self description, or provide both for better results.
+              </p>
             </div>
           </div>
 

@@ -3,10 +3,13 @@ import apiClient from '../../../lib/apiClient'
 // generating interview report :connecting backend with frontend
 export const generateInterviewReport = async ({  jobDescription, selfDescription ,resume}) => {
     const formData = new FormData();
-    formData.append("selfDescription", selfDescription)
     formData.append("jobDescription", jobDescription)
-    formData.append("resume", resume)
-
+    if (selfDescription && selfDescription.trim()) {
+        formData.append("selfDescription", selfDescription);
+    }
+     if (resume) {
+        formData.append("resume", resume);
+    }   
     try {
         const res = await apiClient.post("/api/interview", formData, {
             headers: {

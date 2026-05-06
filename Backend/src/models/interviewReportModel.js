@@ -24,11 +24,11 @@ const interviewReportSchema = new mongoose.Schema({
     },
     resume: {
         type: String,
-        required: [true, 'Resume is required']
+        default: ""
     },
     selfDescription: {
         type: String,
-        required: [true, 'Self description is required']
+        default: ""
     },
     matchScore: {
         type: Number,
@@ -80,13 +80,30 @@ const interviewReportSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
-    title:{
-        type:String,
-        required:[true,"Job title is required for generating report"]
+    title: {
+        type: String,
+        required: [true, "Job title is required for generating report"]
     }
 
-},{timestamps:true})
+}, { timestamps: true });
 
+interviewReportSchema.pre("validate", function () {
+    const hasResume = this.resume && this.resume.trim().length > 0;
+    const hasSelfDescription =
+        this.selfDescription && this.selfDescription.trim().length > 0;
+
+    if (!hasResume && !hasSelfDescription) {
+        this.invalidate(
+            "resume",
+            "Either resume or self description is required"
+        );
+
+        this.invalidate(
+            "selfDescription",
+            "Either self description or resume is required"
+        );
+    }
+});
 const InterviewReport = mongoose.model('InterviewReport', interviewReportSchema);
 
 module.exports = InterviewReport;
