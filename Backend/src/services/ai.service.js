@@ -1,68 +1,147 @@
 const { GoogleGenAI } = require("@google/genai");
 const { z } = require("zod");
 const { zodToJsonSchema } = require("zod-to-json-schema");
-const puppeteer = require('puppeteer-core');
+const puppeteer = require("puppeteer-core");
+const fs = require("fs");
+
 
 const gemini = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
 });
 
+const WINDOWS_CHROME_PATH = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+// ─────────────────────────────────────────────
+const IS_PRODUCTION = process.env.NODE_ENV==='production';
+
+// ─────────────────────────────────────────────
+//  Schema definitions
+// ─────────────────────────────────────────────
 const interviewReportSchema = z.object({
-    matchScore: z.number().min(0).max(100).describe("The match score between the candidate and the job role (0-100)"),
+    matchScore: z
+        .number()
+        .min(0)
+        .max(100)
+        .describe("The match score between the candidate and the job role (0-100)"),
 
-    technicalQuestions: z.array(z.object({
-        question: z.string().describe("The technical question to be asked in the interview"),
-        answer: z.string().describe("How to answer this question, what points to cover"),
-        intention: z.string().describe("The intention of interviewer behind this question")
-    })).describe("Technical questions with their intention and how to answer them"),
+    technicalQuestions: z
+        .array(
+            z.object({
+                question: z.string().describe("The technical question to be asked in the interview"),
+                answer: z.string().describe("How to answer this question, what points to cover"),
+                intention: z.string().describe("The intention of interviewer behind this question"),
+            })
+        )
+        .describe("Technical questions with their intention and how to answer them"),
 
-    behavioralQuestions: z.array(z.object({
-        question: z.string().describe("The behavioral question to be asked in the interview"),
-        answer: z.string().describe("How to answer this question, what points to cover"),
-        intention: z.string().describe("The intention of interviewer behind this question")
-    })).describe("Behavioral questions with their intention and how to answer them"),
+    behavioralQuestions: z
+        .array(
+            z.object({
+                question: z.string().describe("The behavioral question to be asked in the interview"),
+                answer: z.string().describe("How to answer this question, what points to cover"),
+                intention: z.string().describe("The intention of interviewer behind this question"),
+            })
+        )
+        .describe("Behavioral questions with their intention and how to answer them"),
 
-    skillGaps: z.array(z.object({
-        skill: z.string().describe("The skill which candidate is lacking"),
-        severity: z.enum(["low", "medium", "high"]).describe("Severity level of the skill gap")
-    })).describe("Skill gaps the candidate has for the applied role with severity levels"),
+    skillGaps: z
+        .array(
+            z.object({
+                skill: z.string().describe("The skill which candidate is lacking"),
+                severity: z.enum(["low", "medium", "high"]).describe("Severity level of the skill gap"),
+            })
+        )
+        .describe("Skill gaps the candidate has for the applied role with severity levels"),
 
-    preparationPlan: z.array(z.object({
-        day: z.number().describe("Day number in the preparation plan"),
-        focus: z.string().describe("Main focus or topic for that day"),
-        tasks: z.array(z.string()).describe("Specific tasks to complete on that day")
-    })).describe("Day-by-day preparation plan for the interview"),
+    preparationPlan: z
+        .array(
+            z.object({
+                day: z.number().describe("Day number in the preparation plan"),
+                focus: z.string().describe("Main focus or topic for that day"),
+                tasks: z.array(z.string()).describe("Specific tasks to complete on that day"),
+            })
+        )
+        .describe("Day-by-day preparation plan for the interview"),
 
     title: z.string().describe("Job title which the interview report is generated"),
-
 });
-// Generating pdf from html with puppeteer
+
+// ─────────────────────────────────────────────
+//  PDF generation
+// ─────────────────────────────────────────────
 const htmlToPdfGenerate = async (htmlResume) => {
-    const browser = await puppeteer.launch({
-        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-        headless: "new",
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-    const page = await browser.newPage();
-    await page.setContent(htmlResume, {
-        waitUntil: 'networkidle2',
-    });
+    let browser;
 
-    const pdfBuffer = await page.pdf({
-        format: "A4",
-        margin: {
-            top: "20mm",
-            bottom: "20mm",
-            left: "10mm",
-            right: "10mm"
+    try {
+        let executablePath;
+
+        if (IS_PRODUCTION) {
+            const chromium = require("@sparticuz/chromium");
+            executablePath = await chromium.executablePath();
+            browser = await puppeteer.launch({
+                args: chromium.args,
+                executablePath,
+                headless: chromium.headless,
+                defaultViewport: chromium.defaultViewport,
+            });
+        } else {
+            // ── Local Windows: use your installed Chrome ──────────────────────────
+            // Tries Program Files first, then Program Files (x86) as fallback.
+            const fallbackPath = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe";
+
+            if (fs.existsSync(WINDOWS_CHROME_PATH)) {
+                executablePath = WINDOWS_CHROME_PATH;
+            } else if (fs.existsSync(fallbackPath)) {
+                executablePath = fallbackPath;
+            } else {
+                throw new Error(
+                    `Chrome not found at:\n  ${WINDOWS_CHROME_PATH}\n  ${fallbackPath}\n\n` +
+                    `Please install Google Chrome or update WINDOWS_CHROME_PATH in ai.service.js.`
+                );
+            }
+            browser = await puppeteer.launch({
+                executablePath,
+                headless: "new",
+                args: [
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                ],
+            });
         }
-    });
-    await browser.close();
-    return pdfBuffer
 
-}
+        const page = await browser.newPage();
+        await page.setContent(htmlResume, { waitUntil: "networkidle0" });
 
-// for generating interview report
+        const pdfBuffer = await page.pdf({
+            format: "A4",
+            printBackground: true,
+            margin: {
+                top: "15mm",
+                bottom: "15mm",
+                left: "12mm",
+                right: "12mm",
+            },
+        });
+
+        return pdfBuffer;
+    } catch (error) {
+        console.error("Puppeteer PDF generation error:", error);
+        throw error;
+    } finally {
+        if (browser) {
+            try {
+                await browser.close();
+            } catch (closeError) {
+                console.warn("Error closing browser:", closeError);
+            }
+        }
+    }
+};
+
+// ─────────────────────────────────────────────
+//  Interview report
+// ─────────────────────────────────────────────
 const generateInterviewReport = async ({ resume = "", jobDescription, selfDescription = "" }) => {
     const prompt = `
 You are an expert interview preparation assistant.
@@ -105,21 +184,25 @@ Return only valid JSON according to the schema.
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
-                responseJsonSchema: zodToJsonSchema(interviewReportSchema),  // ✅ Correct key
-            }
+                responseJsonSchema: zodToJsonSchema(interviewReportSchema),
+            },
         });
 
-        const parsed = JSON.parse(response.text);  // ✅ Parse the JSON string
-        return parsed;
+        return JSON.parse(response.text);
     } catch (error) {
         console.error("Error invoking Gemini API:", error);
+        throw error;
     }
 };
 
-// For Generating resume pdf 
-
+// ─────────────────────────────────────────────
+//  Resume PDF
+// ─────────────────────────────────────────────
 const generateResumePdf = async ({ resume, jobDescription, selfDescription }) => {
-    const resumePdfSchema = z.object({ resumeHtml: z.string().describe("The html content of the resume which can be provided to puppeteer library to generate pdf ") });
+    const resumePdfSchema = z.object({
+        resumeHtml: z.string().describe("The html content of the resume in professional format"),
+    });
+
     const prompt = `
 You are an expert resume writer and ATS optimization specialist.
 
@@ -133,13 +216,6 @@ ${selfDescription && selfDescription.trim() ? selfDescription : "No self descrip
 
 Target Job Description:
 ${jobDescription}
-
-Your task is to create a clean, modern, ATS-friendly resume that maximizes:
-- ATS score
-- Recruiter readability
-- Interview selection chances
-- Keyword relevance
-- Professional presentation
 
 IMPORTANT INSTRUCTIONS:
 
@@ -158,63 +234,26 @@ IMPORTANT INSTRUCTIONS:
 - Enhance project descriptions professionally while keeping them believable.
 - Prioritize the most relevant technical skills and experiences.
 
-3. RECRUITER RETENTION
-- Create a strong professional summary tailored to the job description.
-- Make the resume highly scannable and easy to read within 6–8 seconds.
-- Use concise but impactful bullet points.
-- Highlight job-ready skills and relevant projects clearly.
-
-4. DESIGN RULES (VERY IMPORTANT)
+3. DESIGN RULES (VERY IMPORTANT)
 - Keep the design minimal, professional, and ATS-safe.
-- STRICTLY avoid colorful designs or creative layouts.
 - Use only black, dark gray, and white colors.
-- Maintain clean spacing and typography.
 - Use professional fonts like Arial, Helvetica, or Calibri.
 - No gradients, backgrounds, shadows, cards, or fancy UI styling.
-- Resume should look like a real professional corporate resume.
+- Use inline CSS only — no external stylesheets.
+- Optimize for Puppeteer PDF rendering and print-friendly spacing.
 
-5. RESUME STRUCTURE
+4. RESUME STRUCTURE
 Include only relevant sections:
-- Header
-- Professional Summary
-- Technical Skills
-- Projects
-- Experience
-- Education
-- Certifications
-- Achievements
+- Header, Professional Summary, Technical Skills,
+- Projects, Experience, Education, Certifications, Achievements
 
-6. LENGTH
-- Keep it concise and high quality.
-- Ideal length:
-  - 1 page for fresher/junior candidates
-  - Maximum 2 pages only if truly necessary
-- Avoid filler content and repetition.
+5. LENGTH
+- 1 page for fresher/junior candidates.
+- Maximum 2 pages only if truly necessary.
 
-7. OUTPUT FORMAT
-Return ONLY a valid JSON object in this format:
-
-{
-  "html": "<FULL HTML RESUME HERE>"
-}
-
-8. HTML REQUIREMENTS
-- Generate complete production-ready HTML.
-- Use inline CSS only.
-- Optimize for Puppeteer PDF generation.
-- Ensure print-friendly spacing and clean page breaks.
-- Prevent content overflow.
-- Maintain professional typography and alignment.
-- Keep margins and spacing optimized for ATS parsing.
-
-9. EXTRA ENHANCEMENTS
-- If experience is limited, strategically strengthen projects and technical depth.
-- Tailor the entire resume to the target role.
-- Make the candidate appear interview-ready and professionally competitive.
-- Maintain authenticity and realism throughout.
-
-Generate a polished, corporate-level, ATS-friendly resume that looks professional and increases interview conversion chances.
+Return a JSON object with a single field "resumeHtml" containing the complete HTML resume.
 `;
+
     try {
         const response = await gemini.models.generateContent({
             model: "gemini-3-flash-preview",
@@ -222,16 +261,15 @@ Generate a polished, corporate-level, ATS-friendly resume that looks professiona
             config: {
                 responseMimeType: "application/json",
                 responseJsonSchema: zodToJsonSchema(resumePdfSchema),
-            }
+            },
         });
 
         const parsed = JSON.parse(response.text);
-        const pdfBuffer = await htmlToPdfGenerate(parsed.resumeHtml);
-        return pdfBuffer;
+        return await htmlToPdfGenerate(parsed.resumeHtml);
     } catch (error) {
-        console.error("Error on Generating Resume ", error);
+        console.error("Error generating resume PDF:", error);
         throw error;
     }
-}
+};
 
 module.exports = { generateInterviewReport, generateResumePdf };
