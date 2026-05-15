@@ -24,11 +24,26 @@ const htmlToPdfGenerate = async (htmlResume) => {
         ];
 
         if (IS_PRODUCTION) {
-            // Render installs Chromium at this path via apt-get
-            executablePath =
-                process.env.CHROMIUM_PATH ||   // allow override via env var
-                "/usr/bin/chromium"            ||
-                "/usr/bin/chromium-browser";
+            // Try multiple common Chromium paths in Render/Ubuntu
+            const possiblePaths = [
+                process.env.CHROMIUM_PATH,  // allow override via env var
+                "/usr/bin/chromium-browser",
+                "/usr/bin/chromium",
+                "/usr/lib/bin/chromium-browser",
+                "/usr/lib/bin/chromium",
+                "/snap/bin/chromium"
+            ];
+
+            executablePath = possiblePaths.find(path => path && fs.existsSync(path));
+
+            if (!executablePath) {
+                throw new Error(
+                    `Chromium not found at any of these paths: ${possiblePaths.filter(Boolean).join(', ')}\n` +
+                    `Make sure Chromium is installed in your Render environment.`
+                );
+            }
+
+            console.log(`Using Chromium at: ${executablePath}`);
 
             browser = await puppeteer.launch({
                 executablePath,
@@ -68,7 +83,6 @@ const htmlToPdfGenerate = async (htmlResume) => {
                 left: "12mm",
                 right: "12mm",
             },
-            // ✅ removed stray `a` here
         });
 
         return pdfBuffer;
@@ -146,7 +160,7 @@ Return only valid JSON according to the schema.
 
     try {
         const response = await gemini.models.generateContent({
-            model: "gemini-3-flash-preview",   
+            model: "gemini-2.5-flash",   
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
@@ -189,7 +203,7 @@ Return JSON with field "resumeHtml" containing the complete HTML string.
 
     try {
         const response = await gemini.models.generateContent({
-            model: "gemini-3-flash-preview",   
+            model: "gemini-2.5-flash",   
             contents: prompt,
             config: {
                 responseMimeType: "application/json",

@@ -116,8 +116,12 @@ const generateResume = async (req, res) => {
 
         return res.end(pdfBuffer);
     } catch (error) {
-        console.error("Error generating resume:", error);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error("Error generating resume:", error.message);
+        console.error("Stack trace:", error.stack);
+        return res.status(500).json({ 
+            message: "Failed to generate resume PDF", 
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined 
+        });
     }
 };
 
