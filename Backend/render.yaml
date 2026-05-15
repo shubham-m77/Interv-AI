@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: interv-ai
+    env: node
+    buildCommand: apt-get install -y chromium && npm install
+    startCommand: node index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PUPPETEER_SKIP_DOWNLOAD
+        value: true

@@ -14,8 +14,7 @@ const interviewReportController = async (req, res) => {
 
         let resumeText = "";
         if (resumeFile) {
-           
-            const resumeContent = await (new pdfParse.PDFParse(Uint8Array.from(req.file.buffer))).getText()
+            const resumeData = await pdfParse(req.file.buffer);
             resumeText = resumeData.text || "";
         }
 
